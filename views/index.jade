@@ -6,7 +6,7 @@ block content
     form(action='/', method='post')
       h2 Add Shortlink
       .input-group.input-group-lg
-        span#input-addon-shortlink.input-group-addon go/
+        span#input-addon-shortlink.input-group-addon go.ray.com/
         input.form-control(
           type='text',
           name='slug',
@@ -34,7 +34,7 @@ block content
     a#current-links.anchor
     h2 Current Shortlinks
 
-    if links.length
+    if links.value().length
       table.table.current-links-table
         thead
           tr
@@ -42,7 +42,7 @@ block content
             th.redirects-to Redirects To
             th.actions Actions
         tbody
-          each link in links
+          each link in links.value()
             tr
               td.shortlink: a(href='/' + link.slug) #{link.slug}
               td.redirects-to: a(href=link.urls[0].url) #{link.urls[0].url}

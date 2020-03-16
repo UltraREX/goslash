@@ -5,7 +5,13 @@ var _ = require('lodash'),
     db = require('../lib/db'),
 
     router = express.Router(),
-    links = db('links');
+    links = db.get('links');
+
+
+if (!links.value()) {
+  db.set('links', []).write();
+  links = db.get('links');
+}
 
 function health (req, res, next) {
   res.json({ 'wow': 'such health' });
@@ -27,7 +33,7 @@ function renderEdit (req, res, next) {
 }
 
 function renderStats (req, res, next) {
-  var link = links.getLink(req.params.slug);
+  var link = links.getLink(req.params.slug).value();
 
   if (!link) {
     next();
@@ -38,7 +44,7 @@ function renderStats (req, res, next) {
 }
 
 function redirect (req, res, next) {
-  var link = links.getLink(req.params.slug),
+  var link = links.getLink(req.params.slug).value(),
       url;
 
   if (!link) {
@@ -49,7 +55,7 @@ function redirect (req, res, next) {
   url = _.first(link.urls);
 
   url.clicks++;
-  db.save();
+  links.write();
 
   res.redirect(url.url);
 }
@@ -57,22 +63,21 @@ function redirect (req, res, next) {
 function createLink (req, res, next) {
   var verb = req.body.overwrite ? 'changed' : 'added';
 
-  links.setLink(req.body.slug, req.body.url, req.body.overwrite);
-  db.save();
+  links.setLink(req.body.slug, req.body.url, req.body.overwrite).write();
 
   renderIndexAlert(res, 'success',
     'Shortlink "' + req.body.slug + '" ' + verb + '!');
 }
 
 function deleteLink (req, res, next) {
-  var link = links.getLink(req.body.slug),
+  var link = links.getLink(req.body.slug).value(),
       index;
 
   if (!link) {
     throw new Error('This shortlink does not exist.');
   }
 
-  links.remove({ slug: link.slug });
+  links.remove({ slug: link.slug }).write();
 
   renderIndexAlert(res, 'success',
     'Shortlink <b>' + link.slug + '</b> deleted!');
